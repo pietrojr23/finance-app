@@ -1,9 +1,19 @@
 import { useState, useEffect } from "react";
 import { transactionService } from "./services/transactionService";
 import { recurringTransactionService } from "./services/recurringTransactionService";
+import { authService } from "./services/authService";
 import "./App.css";
 
 function App() {
+  // Auth state
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(true);
+  const [isLogin, setIsLogin] = useState(true);
+  const [authForm, setAuthForm] = useState({ email: "", password: "", displayName: "" });
+  const [authError, setAuthError] = useState("");
+
+  // App state
   const [transactions, setTransactions] = useState([]);
   const [recurringTransactions, setRecurringTransactions] = useState([]);
   const [balance, setBalance] = useState(0);
@@ -11,7 +21,7 @@ function App() {
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("transactions"); // "transactions" | "recurring"
+  const [activeTab, setActiveTab] = useState("transactions");
 
   // Modals
   const [showModal, setShowModal] = useState(false);
@@ -49,15 +59,37 @@ function App() {
     { value: "yearly", label: "Anual" }
   ];
 
-  const loadData = async () => {
+  // Initialize auth listener
+  useEffect(() => {
+    const unsubscribe = authService.onAuthStateChange(async (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+      if (currentUser) {
+        setShowAuthModal(false);
+        await loadData(currentUser.uid);
+      } else {
+        setShowAuthModal(true);
+        // Clear data when logged out
+        setTransactions([]);
+        setRecurringTransactions([]);
+        setBalance(0);
+        setTotalIncome(0);
+        setTotalExpenses(0);
+        setLoading(false);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  const loadData = async (userId) => {
     setLoading(true);
     try {
       const [allTransactions, allRecurring, bal, income, expenses] = await Promise.all([
-        transactionService.getAll(),
-        recurringTransactionService.getAll(),
-        transactionService.getBalance(),
-        transactionService.getTotalIncome(),
-        transactionService.getTotalExpenses()
+        transactionService.getAll(userId),
+        recurringTransactionService.getAll(userId),
+        transactionService.getBalance(userId),
+        transactionService.getTotalIncome(userId),
+        transactionService.getTotalExpenses(userId)
       ]);
       setTransactions(allTransactions);
       setRecurringTransactions(allRecurring);
@@ -67,21 +99,53 @@ function App() {
       setError(null);
     } catch (err) {
       console.error("Error loading data:", err);
-      setError(
-        "Não foi possível conectar ao Firebase. Verifique se o Firestore Database foi criado no console do Firebase e se as regras de segurança permitem leitura/escrita."
-      );
+      setError("Erro ao carregar dados. Verifique a conexão.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Auth handlers
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+    try {
+      if (isLogin) {
+        await authService.login(authForm.email, authForm.password);
+      } else {
+        await authService.register(authForm.email, authForm.password, authForm.displayName);
+      }
+    } catch (err) {
+      const messages = {
+        "auth/email-already-in-use": "Este e-mail já está cadastrado.",
+        "auth/weak-password": "A senha deve ter pelo menos 6 caracteres.",
+        "auth/invalid-email": "E-mail inválido.",
+        "auth/user-not-found": "Usuário não encontrado.",
+        "auth/wrong-password": "Senha incorreta.",
+        "auth/too-many-requests": "Muitas tentativas. Tente novamente mais tarde."
+      };
+      setAuthError(messages[err.code] || "Erro ao autenticar. Tente novamente.");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
+
+  const toggleAuthMode = () => {
+    setIsLogin(!isLogin);
+    setAuthError("");
+    setAuthForm({ email: "", password: "", displayName: "" });
+  };
 
   // Transaction handlers
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) return;
     try {
       const transaction = {
         ...formData,
@@ -90,25 +154,26 @@ function App() {
       };
 
       if (editingTransaction) {
-        await transactionService.delete(editingTransaction.id);
-        await transactionService.add(transaction);
+        await transactionService.delete(user.uid, editingTransaction.id);
+        await transactionService.add(user.uid, transaction);
       } else {
-        await transactionService.add(transaction);
+        await transactionService.add(user.uid, transaction);
       }
 
       setShowModal(false);
       resetForm();
-      loadData();
+      loadData(user.uid);
     } catch (error) {
       console.error("Error saving transaction:", error);
     }
   };
 
   const handleDelete = async (id) => {
+    if (!user) return;
     if (window.confirm("Tem certeza que deseja excluir esta transação?")) {
       try {
-        await transactionService.delete(id);
-        loadData();
+        await transactionService.delete(user.uid, id);
+        loadData(user.uid);
       } catch (error) {
         console.error("Error deleting transaction:", error);
       }
@@ -147,6 +212,7 @@ function App() {
   // Recurring transaction handlers
   const handleRecurringSubmit = async (e) => {
     e.preventDefault();
+    if (!user) return;
     try {
       const recurring = {
         ...recurringFormData,
@@ -156,25 +222,26 @@ function App() {
       };
 
       if (editingRecurring) {
-        await recurringTransactionService.delete(editingRecurring.id);
-        await recurringTransactionService.add(recurring);
+        await recurringTransactionService.delete(user.uid, editingRecurring.id);
+        await recurringTransactionService.add(user.uid, recurring);
       } else {
-        await recurringTransactionService.add(recurring);
+        await recurringTransactionService.add(user.uid, recurring);
       }
 
       setShowRecurringModal(false);
       resetRecurringForm();
-      loadData();
+      loadData(user.uid);
     } catch (error) {
       console.error("Error saving recurring transaction:", error);
     }
   };
 
   const handleRecurringDelete = async (id) => {
+    if (!user) return;
     if (window.confirm("Tem certeza que deseja excluir este pagamento recorrente?")) {
       try {
-        await recurringTransactionService.delete(id);
-        loadData();
+        await recurringTransactionService.delete(user.uid, id);
+        loadData(user.uid);
       } catch (error) {
         console.error("Error deleting recurring transaction:", error);
       }
@@ -182,9 +249,10 @@ function App() {
   };
 
   const handleRecurringToggle = async (recurring) => {
+    if (!user) return;
     try {
-      await recurringTransactionService.toggleActive(recurring.id, !recurring.isActive);
-      loadData();
+      await recurringTransactionService.toggleActive(user.uid, recurring.id, !recurring.isActive);
+      loadData(user.uid);
     } catch (error) {
       console.error("Error toggling recurring transaction:", error);
     }
@@ -225,8 +293,8 @@ function App() {
 
   // Generate transaction from recurring (manual action)
   const handleGenerateFromRecurring = async (recurring) => {
+    if (!user) return;
     try {
-      // Use the nextDueDate from the recurring transaction as the transaction date
       const transactionDate = new Date(recurring.nextDueDate);
       const transaction = {
         type: recurring.type,
@@ -235,13 +303,12 @@ function App() {
         category: recurring.category,
         date: transactionDate
       };
-      await transactionService.add(transaction);
+      await transactionService.add(user.uid, transaction);
 
-      // Update next due date
       const nextDueDate = recurringTransactionService.calculateNextDueDate(recurring.nextDueDate, recurring.frequency);
-      await recurringTransactionService.updateNextDueDate(recurring.id, nextDueDate);
+      await recurringTransactionService.updateNextDueDate(user.uid, recurring.id, nextDueDate);
 
-      loadData();
+      loadData(user.uid);
     } catch (error) {
       console.error("Error generating transaction from recurring:", error);
     }
@@ -262,6 +329,86 @@ function App() {
     const freq = frequencies.find(f => f.value === value);
     return freq ? freq.label : value;
   };
+
+  // Auth modal
+  if (authLoading || showAuthModal) {
+    return (
+      <div className="app auth-screen">
+        <div className="auth-container">
+          <div className="auth-card">
+            <h1>💰 Gerenciador Financeiro</h1>
+            <p className="auth-subtitle">Gerencie suas finanças com segurança</p>
+
+            <div className="auth-tabs">
+              <button
+                className={isLogin ? "active" : ""}
+                onClick={toggleAuthMode}
+              >
+                Entrar
+              </button>
+              <button
+                className={!isLogin ? "active" : ""}
+                onClick={toggleAuthMode}
+              >
+                Cadastrar
+              </button>
+            </div>
+
+            {authError && <div className="auth-error">{authError}</div>}
+
+            <form onSubmit={handleAuthSubmit}>
+              {!isLogin && (
+                <div className="form-group">
+                  <label>Nome</label>
+                  <input
+                    type="text"
+                    value={authForm.displayName}
+                    onChange={(e) => setAuthForm({ ...authForm, displayName: e.target.value })}
+                    placeholder="Seu nome"
+                    required={!isLogin}
+                    autoComplete="name"
+                  />
+                </div>
+              )}
+
+              <div className="form-group">
+                <label>E-mail</label>
+                <input
+                  type="email"
+                  value={authForm.email}
+                  onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
+                  placeholder="seu@email.com"
+                  required
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Senha</label>
+                <input
+                  type="password"
+                  value={authForm.password}
+                  onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
+                />
+              </div>
+
+              <button type="submit" className="btn-primary btn-full" disabled={authLoading}>
+                {isLogin ? "Entrar" : "Criar conta"}
+              </button>
+            </form>
+
+            <p className="auth-footer">
+              Seus dados ficam salvos no Firebase e só você tem acesso.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -287,9 +434,6 @@ function App() {
           >
             Abrir Console do Firebase
           </a>
-          <p className="error-hint">
-            Passos: Criar banco de dados → Modo de teste → Região: southamerica-east1 (São Paulo)
-          </p>
         </div>
       </div>
     );
@@ -299,6 +443,10 @@ function App() {
     <div className="app">
       <header className="header">
         <h1>💰 Gerenciador Financeiro</h1>
+        <div className="header-user">
+          <span>👤 {user.displayName || user.email}</span>
+          <button className="btn-logout" onClick={handleLogout}>Sair</button>
+        </div>
       </header>
 
       {/* Tab Navigation */}

@@ -11,12 +11,14 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 
-const COLLECTION_NAME = "recurringTransactions";
+const getUserCollection = (userId, collectionName) => {
+  return collection(db, "users", userId, collectionName);
+};
 
 export const recurringTransactionService = {
   // Add a new recurring transaction
-  async add(recurringTransaction) {
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+  async add(userId, recurringTransaction) {
+    const docRef = await addDoc(getUserCollection(userId, "recurringTransactions"), {
       ...recurringTransaction,
       startDate: Timestamp.fromDate(new Date(recurringTransaction.startDate)),
       nextDueDate: Timestamp.fromDate(new Date(recurringTransaction.nextDueDate)),
@@ -27,9 +29,9 @@ export const recurringTransactionService = {
   },
 
   // Get all recurring transactions ordered by next due date
-  async getAll() {
+  async getAll(userId) {
     const q = query(
-      collection(db, COLLECTION_NAME),
+      getUserCollection(userId, "recurringTransactions"),
       orderBy("nextDueDate", "asc")
     );
     const snapshot = await getDocs(q);
@@ -42,24 +44,24 @@ export const recurringTransactionService = {
   },
 
   // Get only active recurring transactions
-  async getActive() {
-    const all = await this.getAll();
+  async getActive(userId) {
+    const all = await this.getAll(userId);
     return all.filter(t => t.isActive);
   },
 
   // Delete a recurring transaction
-  async delete(id) {
-    await deleteDoc(doc(db, COLLECTION_NAME, id));
+  async delete(userId, id) {
+    await deleteDoc(doc(db, "users", userId, "recurringTransactions", id));
   },
 
   // Toggle active status
-  async toggleActive(id, isActive) {
-    await updateDoc(doc(db, COLLECTION_NAME, id), { isActive });
+  async toggleActive(userId, id, isActive) {
+    await updateDoc(doc(db, "users", userId, "recurringTransactions", id), { isActive });
   },
 
   // Update next due date (after generating a transaction)
-  async updateNextDueDate(id, nextDueDate) {
-    await updateDoc(doc(db, COLLECTION_NAME, id), {
+  async updateNextDueDate(userId, id, nextDueDate) {
+    await updateDoc(doc(db, "users", userId, "recurringTransactions", id), {
       nextDueDate: Timestamp.fromDate(new Date(nextDueDate))
     });
   },

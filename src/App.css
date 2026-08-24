@@ -42,14 +42,42 @@ body {
 .header {
   background: #fff;
   padding: 1.5rem;
-  text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .header h1 {
   font-size: 1.5rem;
   font-weight: 600;
   color: #2c3e50;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.btn-logout {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-logout:hover {
+  background: #c0392b;
 }
 
 /* Tab Navigation */
@@ -470,6 +498,89 @@ body {
   margin-top: 1.5rem !important;
 }
 
+/* Auth Screen */
+.app.auth-screen {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.auth-card h1 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.auth-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.auth-tabs {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  background: #f0f0f0;
+  overflow: hidden;
+}
+
+.auth-tabs button {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-tabs button.active {
+  background: #fff;
+  color: #4a90d9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.auth-error {
+  background: #fdeaea;
+  color: #e74c3c;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.btn-full {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* Existing responsive styles */
 @media (max-width: 600px) {
   .summary-cards {
     grid-template-columns: 1fr;
@@ -477,6 +588,11 @@ body {
 
   .main {
     padding: 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+    text-align: center;
   }
 
   .transaction-item {
@@ -492,6 +608,10 @@ body {
 
   .modal {
     margin: 1rem;
+    padding: 1.5rem;
+  }
+
+  .auth-card {
     padding: 1.5rem;
   }
 }

@@ -10,12 +10,14 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 
-const COLLECTION_NAME = "transactions";
+const getUserCollection = (userId, collectionName) => {
+  return collection(db, "users", userId, collectionName);
+};
 
 export const transactionService = {
   // Add a new transaction
-  async add(transaction) {
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+  async add(userId, transaction) {
+    const docRef = await addDoc(getUserCollection(userId, "transactions"), {
       ...transaction,
       date: Timestamp.fromDate(new Date(transaction.date)),
       createdAt: Timestamp.now()
@@ -24,9 +26,9 @@ export const transactionService = {
   },
 
   // Get all transactions ordered by date (newest first)
-  async getAll() {
+  async getAll(userId) {
     const q = query(
-      collection(db, COLLECTION_NAME),
+      getUserCollection(userId, "transactions"),
       orderBy("date", "desc")
     );
     const snapshot = await getDocs(q);
@@ -38,34 +40,33 @@ export const transactionService = {
   },
 
   // Get transactions by type (income/expense) - filtered client-side
-  // to avoid needing a composite index in Firestore
-  async getByType(type) {
-    const all = await this.getAll();
+  async getByType(userId, type) {
+    const all = await this.getAll(userId);
     return all.filter(t => t.type === type);
   },
 
   // Delete a transaction
-  async delete(id) {
-    await deleteDoc(doc(db, COLLECTION_NAME, id));
+  async delete(userId, id) {
+    await deleteDoc(doc(db, "users", userId, "transactions", id));
   },
 
   // Get total balance
-  async getBalance() {
-    const transactions = await this.getAll();
+  async getBalance(userId) {
+    const transactions = await this.getAll(userId);
     return transactions.reduce((acc, t) => {
       return t.type === "income" ? acc + t.amount : acc - t.amount;
     }, 0);
   },
 
   // Get total income
-  async getTotalIncome() {
-    const transactions = await this.getByType("income");
+  async getTotalIncome(userId) {
+    const transactions = await this.getByType(userId, "income");
     return transactions.reduce((acc, t) => acc + t.amount, 0);
   },
 
   // Get total expenses
-  async getTotalExpenses() {
-    const transactions = await this.getByType("expense");
+  async getTotalExpenses(userId) {
+    const transactions = await this.getByType(userId, "expense");
     return transactions.reduce((acc, t) => acc + t.amount, 0);
   }
 };
