@@ -44,6 +44,8 @@ function App() {
     category: "",
     frequency: "monthly",
     startDate: new Date().toISOString().split("T")[0],
+    iptu: "",
+    condominio: "",
     isActive: true
   });
 
@@ -221,6 +223,11 @@ function App() {
         nextDueDate: new Date(recurringFormData.startDate)
       };
 
+      if (recurring.category === "Aluguel") {
+        recurring.iptu = parseFloat(recurringFormData.iptu) || 0;
+        recurring.condominio = parseFloat(recurringFormData.condominio) || 0;
+      }
+
       if (editingRecurring) {
         await recurringTransactionService.delete(user.uid, editingRecurring.id);
         await recurringTransactionService.add(user.uid, recurring);
@@ -267,6 +274,8 @@ function App() {
       category: recurring.category,
       frequency: recurring.frequency,
       startDate: recurring.startDate.toISOString().split("T")[0],
+      iptu: recurring.iptu ? recurring.iptu.toString() : "",
+      condominio: recurring.condominio ? recurring.condominio.toString() : "",
       isActive: recurring.isActive
     });
     setShowRecurringModal(true);
@@ -286,6 +295,8 @@ function App() {
       category: "",
       frequency: "monthly",
       startDate: new Date().toISOString().split("T")[0],
+      iptu: "",
+      condominio: "",
       isActive: true
     });
     setEditingRecurring(null);
@@ -303,6 +314,10 @@ function App() {
         category: recurring.category,
         date: transactionDate
       };
+      if (recurring.category === "Aluguel") {
+        transaction.iptu = recurring.iptu || 0;
+        transaction.condominio = recurring.condominio || 0;
+      }
       await transactionService.add(user.uid, transaction);
 
       const nextDueDate = recurringTransactionService.calculateNextDueDate(recurring.nextDueDate, recurring.frequency);
@@ -752,6 +767,33 @@ function App() {
                   required
                 />
               </div>
+
+              {recurringFormData.category === "Aluguel" && (
+                <>
+                  <div className="form-group">
+                    <label>Valor IPTU</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={recurringFormData.iptu}
+                      onChange={(e) => setRecurringFormData({ ...recurringFormData, iptu: e.target.value })}
+                      placeholder="0,00"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Valor Condomínio</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={recurringFormData.condominio}
+                      onChange={(e) => setRecurringFormData({ ...recurringFormData, condominio: e.target.value })}
+                      placeholder="0,00"
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="form-group">
                 <label>Categoria</label>

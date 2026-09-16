@@ -1,119 +1,44 @@
-# Chácara Sao Francisco (Expo + Supabase)
+# 💰 Gerenciador Financeiro
 
-Aplicativo mobile (Android/iOS) para gestão da propriedade rural **Chácara São Francisco**.
+Aplicativo web (PWA) para gerenciar entradas, saídas e pagamentos recorrentes de forma pessoal e privada, com login por e-mail/senha.
 
-## Stack atual
+## Stack
 
-- React Native + Expo
-- TypeScript
-- Supabase Auth
-- Supabase Postgres (tabelas separadas por coleção)
-- Cloudinary (uploads de imagens/PDF)
-- Expo Notifications
+- React 19 + Vite
+- Firebase (Authentication + Firestore)
+- PWA offline-first (`vite-plugin-pwa`)
+- Deploy automático no GitHub Pages via GitHub Actions
 
-## Estrutura
+## Funcionalidades
 
-- `src/` app mobile
-- `supabase/sql/bootstrap.sql` schema + policies necessárias
-- `supabase/sql/relational_tables.sql` tabelas separadas (`users`, `casas`, `chamados`, etc.)
-- `scripts/migrate-firebase-to-supabase.mjs` migração de dados legados
-- `scripts/migrate-documents-to-relational.mjs` migração de `documents` para tabelas separadas
-- `firebase/` artefatos legados (rules/functions antigas)
+- **Autenticação** — cadastro e login por e-mail/senha (Firebase Auth). Cada usuário vê apenas os próprios dados.
+- **Transações** — registrar entradas (receita) e saídas (despesa), editar e excluir.
+- **Resumo** — cartões de **Entradas**, **Saídas** e **Saldo**.
+- **Pagamentos recorrentes** — agendar pagamentos com frequência semanal, mensal, trimestral ou anual, e gerar a transação correspondente com um clique.
+  - Para a categoria **Aluguel**, é possível informar também os valores de **IPTU** e **Condomínio**: as Entradas somam o valor do aluguel, e o **Saldo** desconta `IPTU + Condomínio`.
 
-## Configuração rápida
+## Rodando localmente
 
-1. Copie variáveis de ambiente:
+1. Instale as dependências:
 
-```bash
-cp .env.example .env
-```
+   ```bash
+   npm install
+   ```
 
-2. Preencha `.env` com Supabase:
+2. Crie o arquivo `.env` baseado no `.env.example` e preencha com as credenciais do seu projeto Firebase (Auth + Firestore):
 
-```env
-EXPO_PUBLIC_SUPABASE_URL=
-EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-EXPO_PUBLIC_SUPABASE_ANON_KEY=
-EXPO_PUBLIC_SUPABASE_STORAGE_BUCKET=app-files
-EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=
-EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=
-EXPO_PUBLIC_SUPABASE_PASSWORD_RESET_URL=
-EXPO_PUBLIC_OPENWEATHER_KEY=
-EXPO_PUBLIC_EXPO_PROJECT_ID=
-```
+   ```bash
+   cp .env.example .env
+   ```
 
-3. Instale dependências:
+3. Inicie o servidor de desenvolvimento:
 
-```bash
-npm install
-```
+   ```bash
+   npm run dev
+   ```
 
-4. No Supabase SQL Editor, execute:
+## Deploy no GitHub Pages
 
-- `supabase/sql/bootstrap.sql`
-- `supabase/sql/relational_tables.sql`
+O repositório inclui um workflow (`deploy.yml`) que, a cada push na branch `main`, executa `npm run build` e publica a pasta `dist/` no GitHub Pages.
 
-5. Rode o app:
-
-```bash
-npm run start
-```
-
-## Migração de dados do Firebase
-
-Pré-requisitos:
-
-- JSON de Service Account do Firebase
-- `SUPABASE_SERVICE_ROLE_KEY` do projeto Supabase
-
-Comando:
-
-```bash
-FIREBASE_SERVICE_ACCOUNT_PATH=/caminho/service-account.json \
-SUPABASE_URL=https://seu-projeto.supabase.co \
-SUPABASE_SERVICE_ROLE_KEY=... \
-npm run migrate:firebase-to-supabase
-```
-
-Opcional para limpar destino antes da migração:
-
-```bash
-CLEAR_SUPABASE_DOCUMENTS=true npm run migrate:firebase-to-supabase
-```
-
-## Migração de `documents` para tabelas separadas
-
-Após executar o SQL das tabelas separadas:
-
-```bash
-SUPABASE_URL=https://seu-projeto.supabase.co \
-SUPABASE_SERVICE_ROLE_KEY=... \
-npm run migrate:documents-to-relational
-```
-
-Opcional para limpar as tabelas separadas antes de remigrar:
-
-```bash
-CLEAR_RELATIONAL_TABLES=true npm run migrate:documents-to-relational
-```
-
-## Comandos úteis
-
-```bash
-npm run typecheck
-```
-
-## Câmeras RTSP no app (MediaMTX)
-
-Para converter RTSP em HLS e tocar dentro do app, use o setup pronto em:
-
-- `infra/mediamtx/docker-compose.yml`
-- `infra/mediamtx/mediamtx.yml`
-- `infra/mediamtx/README.md`
-
-Resumo:
-
-1. Suba o MediaMTX com Docker Compose.
-2. Configure as paths RTSP no `mediamtx.yml`.
-3. Use URL HLS (`.../index.m3u8`) no campo **URL de reprodução interna** da aba `CAMERAS`.
-4. Para acesso fora da rede local, suba o `cloudflared` (`docker compose --profile tunnel up -d`) e configure também **URL de reprodução externa** com endpoint público HTTPS (`https://.../index.m3u8`).
+Para o build de produção, as variáveis de ambiente do Firebase são lidas do arquivo `.env.production` (commitado, pois contém apenas chaves públicas do projeto Firebase — as regras de segurança no Firestore protegem os dados).

@@ -50,11 +50,16 @@ export const transactionService = {
     await deleteDoc(doc(db, "users", userId, "transactions", id));
   },
 
-  // Get total balance
+  // Get total balance (for rent income, deduct IPTU and condominium fees)
   async getBalance(userId) {
     const transactions = await this.getAll(userId);
     return transactions.reduce((acc, t) => {
-      return t.type === "income" ? acc + t.amount : acc - t.amount;
+      if (t.type === "income") {
+        const iptu = t.iptu || 0;
+        const condominio = t.condominio || 0;
+        return acc + t.amount - iptu - condominio;
+      }
+      return acc - t.amount;
     }, 0);
   },
 
