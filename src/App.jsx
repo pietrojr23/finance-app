@@ -64,15 +64,17 @@ function App() {
 
   const monthStats = useMemo(() => {
     let income = 0;
+    let netIncome = 0;
     let expenses = 0;
     for (const t of monthTransactions) {
       if (t.type === "income") {
-        income += t.amount - (t.iptu || 0) - (t.condominio || 0);
+        income += t.amount;
+        netIncome += t.amount - (t.iptu || 0) - (t.condominio || 0);
       } else {
         expenses += t.amount;
       }
     }
-    return { income, expenses, balance: income - expenses };
+    return { income, expenses, balance: netIncome - expenses };
   }, [monthTransactions]);
 
   const loadData = useCallback(async (userId) => {
