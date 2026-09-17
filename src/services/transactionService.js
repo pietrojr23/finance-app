@@ -6,7 +6,8 @@ import {
   doc,
   query,
   orderBy,
-  Timestamp
+  Timestamp,
+  updateDoc
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 
@@ -37,6 +38,15 @@ export const transactionService = {
       ...doc.data(),
       date: doc.data().date.toDate()
     }));
+  },
+
+  // Update an existing transaction
+  async update(userId, id, transaction) {
+    await updateDoc(doc(db, "users", userId, "transactions", id), {
+      ...transaction,
+      date: Timestamp.fromDate(new Date(transaction.date)),
+      updatedAt: Timestamp.now()
+    });
   },
 
   // Get transactions by type (income/expense) - filtered client-side

@@ -16,6 +16,7 @@ Aplicativo web (PWA) para gerenciar entradas, saídas e pagamentos recorrentes d
 - **Resumo** — cartões de **Entradas**, **Saídas** e **Saldo**.
 - **Pagamentos recorrentes** — agendar pagamentos com frequência semanal, mensal, trimestral ou anual, e gerar a transação correspondente com um clique.
   - Para a categoria **Aluguel**, é possível informar também os valores de **IPTU** e **Condomínio**: as Entradas somam o valor do aluguel, e o **Saldo** desconta `IPTU + Condomínio`.
+- **Categorias por usuário** — cada usuário pode criar e excluir suas próprias categorias de entrada e saída.
 
 ## Rodando localmente
 
@@ -42,3 +43,7 @@ Aplicativo web (PWA) para gerenciar entradas, saídas e pagamentos recorrentes d
 O repositório inclui um workflow (`deploy.yml`) que, a cada push na branch `main`, executa `npm run build` e publica a pasta `dist/` no GitHub Pages.
 
 Para o build de produção, as variáveis de ambiente do Firebase são lidas do arquivo `.env.production` (commitado, pois contém apenas chaves públicas do projeto Firebase — as regras de segurança no Firestore protegem os dados).
+
+## Regras do Firestore
+
+O repositório inclui o arquivo `firestore.rules`, que garante que cada usuário só possa ler/escrever nos próprios sub-caminhos (`users/{uid}/...`). Ao criar um projeto novo, publique as regras no console do Firebase (ou com `firebase deploy --only firestore:rules`).

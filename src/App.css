@@ -448,6 +448,38 @@ body {
   color: #aaa;
 }
 
+.category-select-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.category-select-row select {
+  flex: 1;
+}
+
+.category-delete {
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.category-inline-add {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.category-inline-add input {
+  flex: 1;
+}
+
+.category-inline-add .btn-secondary {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  white-space: nowrap;
+}
+
 .modal-actions {
   display: flex;
   gap: 1rem;
