@@ -7,7 +7,7 @@ import {
   IconTrash,
   IconPause,
   IconPlay,
-  IconBolt,
+  IconCheckCircle,
   IconInbox,
   IconCalendar
 } from "./Icon";
@@ -73,7 +73,7 @@ function RecurringTab({ recurringTransactions, onNew, onEdit, onDelete, onToggle
                       title="Gerar transação agora"
                       aria-label={`Gerar transação de ${recurring.description}`}
                     >
-                      <IconBolt width={18} height={18} />
+                      <IconCheckCircle width={18} height={18} />
                     </button>
                   )}
                   <button

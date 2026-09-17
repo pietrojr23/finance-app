@@ -89,7 +89,12 @@ export const IconPause = icon(
 
 export const IconPlay = icon(<path d="m6 4 14 8-14 8Z" />);
 
-export const IconBolt = icon(<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />);
+export const IconCheckCircle = icon(
+  <>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <path d="m9 11 3 3L22 4" />
+  </>
+);
 
 export const IconArrowDownLeft = icon(
   <>
