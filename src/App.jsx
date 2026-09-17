@@ -3,6 +3,7 @@ import { transactionService } from "./services/transactionService";
 import { recurringTransactionService } from "./services/recurringTransactionService";
 import { categoryService, DEFAULT_CATEGORIES } from "./services/categoryService";
 import { authService } from "./services/authService";
+import { toISODate } from "./utils/format";
 import Header from "./components/Header";
 import AuthScreen from "./components/AuthScreen";
 import SummaryCards from "./components/SummaryCards";
@@ -181,16 +182,25 @@ function App() {
   const handleSubmitRecurring = async (form) => {
     if (!user) return;
     try {
+      const startDate = new Date(form.startDate);
+      const startDateChanged =
+        editingRecurring && form.startDate !== toISODate(editingRecurring.startDate);
+      const neverGenerated =
+        editingRecurring &&
+        editingRecurring.nextDueDate.getTime() === editingRecurring.startDate.getTime();
+
       const recurring = {
         type: form.type,
         description: form.description,
         amount: parseFloat(form.amount),
         category: form.category,
         frequency: form.frequency,
-        startDate: new Date(form.startDate),
+        startDate,
         nextDueDate: editingRecurring
-          ? editingRecurring.nextDueDate
-          : new Date(form.startDate),
+          ? startDateChanged && neverGenerated
+            ? startDate
+            : editingRecurring.nextDueDate
+          : startDate,
         isActive: form.isActive
       };
       if (recurring.category === "Aluguel") {
