@@ -1,33 +1,31 @@
+import { IconList, IconRepeat, IconPlus } from "./Icon";
+
 function BottomNav({ activeTab, onTabChange, onAdd }) {
   return (
-    <nav className="bottom-nav">
+    <nav className="bottom-nav" aria-label="Navegação">
       <button
         className={`nav-btn ${activeTab === "transactions" ? "active" : ""}`}
         onClick={() => onTabChange("transactions")}
       >
-        <span className="nav-icon">📋</span>
-        <span className="nav-bubble">Transações</span>
+        <IconList className="nav-icon" width={24} height={24} />
+        <span className="nav-label">Transações</span>
       </button>
-
-      <span className="nav-spacer" />
 
       <button
         className="fab"
         onClick={onAdd}
         title="Adicionar"
-        aria-label="Adicionar"
+        aria-label="Adicionar nova transação ou pagamento"
       >
-        +
+        <IconPlus width={26} height={26} />
       </button>
-
-      <span className="nav-spacer" />
 
       <button
         className={`nav-btn ${activeTab === "recurring" ? "active" : ""}`}
         onClick={() => onTabChange("recurring")}
       >
-        <span className="nav-icon">🔄</span>
-        <span className="nav-bubble">Recorrentes</span>
+        <IconRepeat className="nav-icon" width={24} height={24} />
+        <span className="nav-label">Recorrentes</span>
       </button>
     </nav>
   );

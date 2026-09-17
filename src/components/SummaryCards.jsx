@@ -1,26 +1,29 @@
 import { formatCurrency } from "../utils/format";
+import { IconArrowDownLeft, IconArrowUpRight } from "./Icon";
 
 function SummaryCards({ totalIncome, totalExpenses, balance }) {
   return (
-    <div className="summary-hero">
+    <section className="summary-hero" aria-label="Resumo financeiro">
       <span className="hero-label">Saldo total</span>
       <div className="hero-value">{formatCurrency(balance)}</div>
 
       <div className="summary-row">
         <div className="summary-mini">
           <span className="mini-label">
-            <span className="mini-dot income">▲</span> Entradas
+            <IconArrowDownLeft className="mini-dot income" width={14} height={14} />
+            Entradas
           </span>
-          <div className="mini-balance">{formatCurrency(totalIncome)}</div>
+          <div className="mini-balance positive">{formatCurrency(totalIncome)}</div>
         </div>
         <div className="summary-mini">
           <span className="mini-label">
-            <span className="mini-dot expense">▼</span> Saídas
+            <IconArrowUpRight className="mini-dot expense" width={14} height={14} />
+            Saídas
           </span>
-          <div className="mini-balance">{formatCurrency(totalExpenses)}</div>
+          <div className="mini-balance negative">{formatCurrency(totalExpenses)}</div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 

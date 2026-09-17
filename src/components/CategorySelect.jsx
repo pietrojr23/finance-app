@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { IconTrash } from "./Icon";
 
 function CategorySelect({
   type,
@@ -14,7 +15,7 @@ function CategorySelect({
   const [saving, setSaving] = useState(false);
 
   const selected = categories.find(c => c.name === value);
-  const isCustom = selected && !defaultNames.includes(selected.name);
+  const isCustom = selected && !defaultNames.has(selected.name);
 
   const handleSelect = (e) => {
     const next = e.target.value;
@@ -57,7 +58,7 @@ function CategorySelect({
               {cat.name}
             </option>
           ))}
-          <option value="__new__">➕ Nova categoria...</option>
+          <option value="__new__">Nova categoria...</option>
         </select>
         {isCustom && (
           <button
@@ -65,8 +66,9 @@ function CategorySelect({
             className="btn-icon danger category-delete"
             onClick={handleDelete}
             title={`Excluir categoria ${selected.name}`}
+            aria-label={`Excluir categoria ${selected.name}`}
           >
-            🗑️
+            <IconTrash width={18} height={18} />
           </button>
         )}
       </div>

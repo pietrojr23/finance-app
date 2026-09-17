@@ -1,6 +1,7 @@
 import { useState } from "react";
 import CategorySelect from "./CategorySelect";
 import TypeSwitch from "./TypeSwitch";
+import { IconX } from "./Icon";
 import { frequencies } from "../utils/constants";
 import { toISODate } from "../utils/format";
 
@@ -34,8 +35,13 @@ function RecurringModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{editing ? "Editar Pagamento Recorrente" : "Novo Pagamento Recorrente"}</h2>
+      <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Pagamento recorrente">
+        <div className="modal-header">
+          <h2>{editing ? "Editar Pagamento Recorrente" : "Novo Pagamento Recorrente"}</h2>
+          <button className="btn-icon modal-close" onClick={onClose} aria-label="Fechar">
+            <IconX width={18} height={18} />
+          </button>
+        </div>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Tipo</label>

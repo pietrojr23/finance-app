@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { authService } from "../services/authService";
+import { IconWallet } from "./Icon";
 
 const errorMessages = {
   "auth/email-already-in-use": "Este e-mail já está cadastrado.",
@@ -42,9 +43,15 @@ function AuthScreen() {
   return (
     <div className="app auth-screen">
       <div className="auth-container">
+        <div className="auth-logo">
+          <span className="auth-logo-icon" aria-hidden="true">
+            <IconWallet width={44} height={44} />
+          </span>
+          <h1>Finanças</h1>
+          <p>Suas contas em um só lugar</p>
+        </div>
+
         <div className="auth-card">
-          <h1>💰 Gerenciador Financeiro</h1>
-          <p className="auth-subtitle">Gerencie suas finanças com segurança</p>
 
           <div className="auth-tabs">
             <button
