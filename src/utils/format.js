@@ -16,3 +16,10 @@ export const toISODate = (date = new Date()) => {
   const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
+
+// Parse a "YYYY-MM-DD" input as LOCAL midnight, so stored timestamps
+// round-trip to the picked date regardless of the user's timezone.
+export const parseDateInput = (value) => {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
