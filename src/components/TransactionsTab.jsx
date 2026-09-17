@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatCurrency, formatDate } from "../utils/format";
+import { formatCurrency, formatDate, exportTransactionsCSV } from "../utils/format";
 import {
   IconArrowDownLeft,
   IconArrowUpRight,
@@ -8,7 +8,8 @@ import {
   IconInbox,
   IconSearch,
   IconX,
-  IconCopy
+  IconCopy,
+  IconDownload
 } from "./Icon";
 
 function TransactionsTab({ transactions, categories, onNew, onEdit, onDelete, onDuplicate }) {
@@ -34,11 +35,29 @@ function TransactionsTab({ transactions, categories, onNew, onEdit, onDelete, on
     setType("all");
   };
 
+  const handleExport = () => {
+    const d = transactions[0]?.date || new Date();
+    const d2 = new Date(d);
+    const month = String(d2.getMonth() + 1).padStart(2, "0");
+    exportTransactionsCSV(filtered, `transacoes-${d2.getFullYear()}-${month}.csv`);
+  };
+
   return (
     <div className="transactions-section">
       <div className="section-head">
         <h2>Transações</h2>
-        <span className="section-count">{filtered.length}</span>
+        <div className="section-head-actions">
+          <button
+            className="btn-icon section-export"
+            onClick={handleExport}
+            disabled={filtered.length === 0}
+            title="Exportar CSV"
+            aria-label="Exportar transações em CSV"
+          >
+            <IconDownload width={18} height={18} />
+          </button>
+          <span className="section-count">{filtered.length}</span>
+        </div>
       </div>
 
       <div className="filters-bar">

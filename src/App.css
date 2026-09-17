@@ -1360,3 +1360,106 @@ body {
     transform: translateY(-16px) scale(0.94);
   }
 }
+
+/* ============================================================
+   Section head actions (export button)
+   ============================================================ */
+.section-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.section-export {
+  width: 38px;
+  height: 38px;
+  color: var(--label-2);
+}
+
+.section-export:hover {
+  background: var(--fill);
+  color: var(--accent);
+}
+
+.section-export:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: var(--label-3);
+}
+
+/* ============================================================
+   Snackbar (undo toast)
+   ============================================================ */
+.snackbar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(84px + var(--safe-bottom));
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: min(92vw, 480px);
+  padding: 0.55rem 0.55rem 0.55rem 1rem;
+  background: var(--label);
+  color: var(--bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow-strong);
+  animation: snackbar-in 0.25s ease;
+}
+
+@keyframes snackbar-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.snackbar-message {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.snackbar-action,
+.snackbar-close {
+  background: none;
+  border: none;
+  color: inherit;
+}
+
+.snackbar-action {
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0.5rem 0.35rem;
+}
+
+.snackbar-close {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.snackbar-close:hover {
+  opacity: 1;
+  background: var(--fill-strong);
+}
+
+@media (min-width: 1024px) {
+  .snackbar {
+    bottom: calc(1.75rem + var(--safe-bottom));
+  }
+}

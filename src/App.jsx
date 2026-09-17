@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { transactionService } from "./services/transactionService";
 import { recurringTransactionService } from "./services/recurringTransactionService";
 import { categoryService, DEFAULT_CATEGORIES } from "./services/categoryService";
@@ -14,6 +14,7 @@ import TransactionModal from "./components/TransactionModal";
 import RecurringModal from "./components/RecurringModal";
 import BottomNav from "./components/BottomNav";
 import QuickAddSheet from "./components/QuickAddSheet";
+import Snackbar from "./components/Snackbar";
 import "./App.css";
 
 function App() {
@@ -28,6 +29,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("transactions");
+  const [undoEntry, setUndoEntry] = useState(null);
+  const undoTimer = useRef(null);
   const [viewMonth, setViewMonth] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -90,6 +93,12 @@ function App() {
       }
     });
     return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimer.current) clearTimeout(undoTimer.current);
+    };
   }, []);
 
   // Live data subscriptions (real-time sync across devices)
@@ -208,30 +217,76 @@ function App() {
 
   const handleDeleteTransaction = async (id) => {
     if (!user) return;
-    if (window.confirm("Tem certeza que deseja excluir esta transação?")) {
-      try {
-        const transaction = transactions.find((t) => t.id === id);
+    try {
+      const transaction = transactions.find((t) => t.id === id);
+      if (!transaction) return;
 
-        await transactionService.delete(user.uid, id);
+      let prevNextDueDate = null;
 
-        if (transaction?.recurringId) {
-          const recurringTpl = recurringTransactions.find(
-            (r) => r.id === transaction.recurringId
+      await transactionService.delete(user.uid, id);
+
+      if (transaction.recurringId) {
+        const recurringTpl = recurringTransactions.find(
+          (r) => r.id === transaction.recurringId
+        );
+        if (
+          recurringTpl &&
+          recurringTpl.nextDueDate.getTime() > transaction.date.getTime()
+        ) {
+          prevNextDueDate = recurringTpl.nextDueDate;
+          await recurringTransactionService.updateNextDueDate(
+            user.uid,
+            recurringTpl.id,
+            transaction.date
           );
-          if (
-            recurringTpl &&
-            recurringTpl.nextDueDate.getTime() > transaction.date.getTime()
-          ) {
-            await recurringTransactionService.updateNextDueDate(
-              user.uid,
-              recurringTpl.id,
-              transaction.date
-            );
-          }
         }
-      } catch (error) {
-        console.error("Error deleting transaction:", error);
       }
+
+      if (undoTimer.current) clearTimeout(undoTimer.current);
+      setUndoEntry({
+        transaction,
+        recurringId: transaction.recurringId || null,
+        prevNextDueDate
+      });
+      undoTimer.current = setTimeout(() => setUndoEntry(null), 6000);
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+    }
+  };
+
+  const handleUndoDelete = async () => {
+    if (!user || !undoEntry) return;
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    const { transaction, recurringId, prevNextDueDate } = undoEntry;
+    setUndoEntry(null);
+    try {
+      const restored = {
+        type: transaction.type,
+        description: transaction.description,
+        amount: transaction.amount,
+        category: transaction.category,
+        date: new Date(transaction.date)
+      };
+      if (transaction.category === "Aluguel") {
+        restored.iptu = transaction.iptu || 0;
+        restored.condominio = transaction.condominio || 0;
+      }
+      if (recurringId) restored.recurringId = recurringId;
+
+      await transactionService.add(user.uid, restored);
+
+      if (recurringId && prevNextDueDate) {
+        const recurringTpl = recurringTransactions.find((r) => r.id === recurringId);
+        if (recurringTpl) {
+          await recurringTransactionService.updateNextDueDate(
+            user.uid,
+            recurringId,
+            prevNextDueDate
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error undoing deletion:", error);
     }
   };
 
@@ -463,6 +518,15 @@ function App() {
         onTabChange={setActiveTab}
         onAdd={() => setShowQuickAdd(true)}
       />
+
+      {undoEntry && (
+        <Snackbar
+          message="Transação excluída"
+          actionLabel="Desfazer"
+          onAction={handleUndoDelete}
+          onClose={() => setUndoEntry(null)}
+        />
+      )}
 
       {showQuickAdd && (
         <QuickAddSheet
