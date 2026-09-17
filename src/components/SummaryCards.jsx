@@ -4,7 +4,7 @@ import { IconArrowDownLeft, IconArrowUpRight } from "./Icon";
 function SummaryCards({ totalIncome, totalExpenses, balance }) {
   return (
     <section className="summary-hero" aria-label="Resumo financeiro">
-      <span className="hero-label">Saldo total</span>
+      <span className="hero-label">Saldo do mês</span>
       <div className="hero-value">{formatCurrency(balance)}</div>
 
       <div className="summary-row">

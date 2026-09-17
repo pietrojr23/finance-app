@@ -10,6 +10,7 @@ const buildInitialForm = (editing) => ({
   amount: editing ? editing.amount.toString() : "",
   category: editing?.category || "",
   date: editing ? toISODate(editing.date) : toISODate(),
+  installments: 1,
   iptu: editing?.iptu ? editing.iptu.toString() : "",
   condominio: editing?.condominio ? editing.condominio.toString() : ""
 });
@@ -68,6 +69,24 @@ function TransactionModal({
               required
             />
           </div>
+
+          {!editing && (
+            <div className="form-group">
+              <label>Parcelas</label>
+              <select
+                value={form.installments}
+                onChange={(e) =>
+                  setForm({ ...form, installments: Number(e.target.value) })
+                }
+              >
+                <option value={1}>À vista</option>
+                <option value={2}>2x</option>
+                <option value={3}>3x</option>
+                <option value={6}>6x</option>
+                <option value={12}>12x</option>
+              </select>
+            </div>
+          )}
 
           <CategorySelect
             type={form.type}

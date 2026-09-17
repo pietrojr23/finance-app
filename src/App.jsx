@@ -7,6 +7,7 @@ import { toISODate, parseDateInput } from "./utils/format";
 import Header from "./components/Header";
 import AuthScreen from "./components/AuthScreen";
 import SummaryCards from "./components/SummaryCards";
+import MonthNavigator from "./components/MonthNavigator";
 import TransactionsTab from "./components/TransactionsTab";
 import RecurringTab from "./components/RecurringTab";
 import TransactionModal from "./components/TransactionModal";
@@ -24,12 +25,13 @@ function App() {
   const [transactions, setTransactions] = useState([]);
   const [recurringTransactions, setRecurringTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [balance, setBalance] = useState(0);
-  const [totalIncome, setTotalIncome] = useState(0);
-  const [totalExpenses, setTotalExpenses] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("transactions");
+  const [viewMonth, setViewMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
 
   // Modals
   const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -51,23 +53,39 @@ function App() {
     []
   );
 
+  const monthTransactions = useMemo(() => {
+    const start = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
+    const end = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1);
+    return transactions.filter((t) => {
+      const d = new Date(t.date);
+      return d >= start && d < end;
+    });
+  }, [transactions, viewMonth]);
+
+  const monthStats = useMemo(() => {
+    let income = 0;
+    let expenses = 0;
+    for (const t of monthTransactions) {
+      if (t.type === "income") {
+        income += t.amount - (t.iptu || 0) - (t.condominio || 0);
+      } else {
+        expenses += t.amount;
+      }
+    }
+    return { income, expenses, balance: income - expenses };
+  }, [monthTransactions]);
+
   const loadData = useCallback(async (userId) => {
     setLoading(true);
     try {
-      const [allTransactions, allRecurring, bal, income, expenses, cats] = await Promise.all([
+      const [allTransactions, allRecurring, cats] = await Promise.all([
         transactionService.getAll(userId),
         recurringTransactionService.getAll(userId),
-        transactionService.getBalance(userId),
-        transactionService.getTotalIncome(userId),
-        transactionService.getTotalExpenses(userId),
         categoryService.seedDefaults(userId)
       ]);
       setTransactions(allTransactions);
       setRecurringTransactions(allRecurring);
       setCategories(cats);
-      setBalance(bal);
-      setTotalIncome(income);
-      setTotalExpenses(expenses);
       setError(null);
     } catch (err) {
       console.error("Error loading data:", err);
@@ -89,9 +107,6 @@ function App() {
         setTransactions([]);
         setRecurringTransactions([]);
         setCategories([]);
-        setBalance(0);
-        setTotalIncome(0);
-        setTotalExpenses(0);
         setLoading(false);
       }
     });
@@ -106,26 +121,59 @@ function App() {
     }
   };
 
+  const addMonthsClamped = (date, months) => {
+    const d = new Date(date);
+    const day = d.getDate();
+    const target = new Date(d.getFullYear(), d.getMonth() + months, 1);
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(day, lastDay));
+    return target;
+  };
+
   // Transaction handlers
   const handleSubmitTransaction = async (form) => {
     if (!user) return;
     try {
-      const transaction = {
+      const baseDate = parseDateInput(form.date);
+      const total = parseFloat(form.amount);
+      const installments = Math.max(1, form.installments || 1);
+      const base = {
         type: form.type,
         description: form.description,
-        amount: parseFloat(form.amount),
+        amount: total,
         category: form.category,
-        date: parseDateInput(form.date)
+        date: baseDate
       };
       if (form.category === "Aluguel") {
-        transaction.iptu = parseFloat(form.iptu) || 0;
-        transaction.condominio = parseFloat(form.condominio) || 0;
+        base.iptu = parseFloat(form.iptu) || 0;
+        base.condominio = parseFloat(form.condominio) || 0;
       }
 
-      if (editingTransaction) {
-        await transactionService.update(user.uid, editingTransaction.id, transaction);
+      if (editingTransaction || installments === 1) {
+        if (editingTransaction) {
+          await transactionService.update(user.uid, editingTransaction.id, base);
+        } else {
+          await transactionService.add(user.uid, base);
+        }
       } else {
-        await transactionService.add(user.uid, transaction);
+        const each = Math.round((total / installments) * 100) / 100;
+        for (let i = 0; i < installments; i++) {
+          const amount =
+            i === installments - 1
+              ? Math.round((total - each * (installments - 1)) * 100) / 100
+              : each;
+          const parcel = {
+            ...base,
+            description: `${base.description} (${i + 1}/${installments})`,
+            amount,
+            date: addMonthsClamped(baseDate, i)
+          };
+          if (base.category === "Aluguel") {
+            parcel.iptu = i === 0 ? base.iptu : 0;
+            parcel.condominio = i === 0 ? base.condominio : 0;
+          }
+          await transactionService.add(user.uid, parcel);
+        }
       }
 
       setShowTransactionModal(false);
@@ -170,6 +218,29 @@ function App() {
   const handleEditTransaction = (transaction) => {
     setEditingTransaction(transaction);
     setShowTransactionModal(true);
+  };
+
+  const handleDuplicateTransaction = async (transaction) => {
+    if (!user) return;
+    try {
+      const copy = {
+        type: transaction.type,
+        description: transaction.description,
+        amount: transaction.amount,
+        category: transaction.category,
+        date: new Date(transaction.date),
+        iptu: transaction.iptu || 0,
+        condominio: transaction.condominio || 0
+      };
+      if (transaction.category !== "Aluguel") {
+        delete copy.iptu;
+        delete copy.condominio;
+      }
+      await transactionService.add(user.uid, copy);
+      loadData(user.uid);
+    } catch (error) {
+      console.error("Error duplicating transaction:", error);
+    }
   };
 
   const handleNewTransaction = () => {
@@ -343,16 +414,19 @@ function App() {
         <div className={`tabs-view${activeTab === "transactions" ? " tabs-view-dashboard" : ""}`}>
           {activeTab === "transactions" && (
             <>
+              <MonthNavigator date={viewMonth} onChange={setViewMonth} />
               <SummaryCards
-                totalIncome={totalIncome}
-                totalExpenses={totalExpenses}
-                balance={balance}
+                totalIncome={monthStats.income}
+                totalExpenses={monthStats.expenses}
+                balance={monthStats.balance}
               />
               <TransactionsTab
-                transactions={transactions}
+                transactions={monthTransactions}
+                categories={categories}
                 onNew={handleNewTransaction}
                 onEdit={handleEditTransaction}
                 onDelete={handleDeleteTransaction}
+                onDuplicate={handleDuplicateTransaction}
               />
             </>
           )}

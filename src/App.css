@@ -291,6 +291,133 @@ body {
 }
 
 /* ============================================================
+   Month navigation
+   ============================================================ */
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.month-nav-btn {
+  width: 36px;
+  height: 36px;
+}
+
+.month-nav-label {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--label);
+  text-transform: capitalize;
+  min-width: 10.5rem;
+  text-align: center;
+  letter-spacing: -0.3px;
+}
+
+.month-nav-today {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--fill);
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.month-nav-today:hover {
+  background: var(--fill-strong);
+}
+
+/* ============================================================
+   Filters and search
+   ============================================================ */
+.filters-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.9rem;
+}
+
+.filter-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.filter-search-icon {
+  position: absolute;
+  left: 0.85rem;
+  color: var(--label-3);
+  pointer-events: none;
+}
+
+.filter-search-input {
+  width: 100%;
+  padding: 0.65rem 2.3rem 0.65rem 2.5rem;
+  border: 1px solid var(--separator);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--label);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.filter-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+}
+
+.filter-search-input::placeholder {
+  color: var(--label-3);
+}
+
+.filter-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.filter-clear {
+  position: absolute;
+  right: 0.2rem;
+  width: 32px;
+  height: 32px;
+  color: var(--label-3);
+}
+
+.filters-row {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.filter-select {
+  flex: 1;
+  min-width: 0;
+  padding: 0.62rem 2.2rem 0.62rem 0.9rem;
+  border: 1px solid var(--separator);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--label);
+  font-size: 0.9rem;
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ============================================================
    Section titles
    ============================================================ */
 .section-head {
