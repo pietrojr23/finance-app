@@ -310,7 +310,7 @@ function App() {
       <Header user={user} onLogout={handleLogout} />
 
       <main className="main">
-        <div className="tabs-view">
+        <div className={`tabs-view${activeTab === "transactions" ? " tabs-view-dashboard" : ""}`}>
           {activeTab === "transactions" && (
             <>
               <SummaryCards
