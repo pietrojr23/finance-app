@@ -3,14 +3,11 @@ import { formatCurrency, formatDate } from "../utils/format";
 function TransactionsTab({ transactions, onNew, onEdit, onDelete }) {
   return (
     <>
-      <div className="actions">
-        <button className="btn-primary" onClick={onNew}>
-          + Nova Transação
-        </button>
-      </div>
-
       <div className="transactions-section">
-        <h2>Transações</h2>
+        <div className="section-head">
+          <h2>Transações</h2>
+          <span className="section-count">{transactions.length}</span>
+        </div>
         {transactions.length === 0 ? (
           <div className="empty-state">
             <p>Nenhuma transação registrada ainda.</p>

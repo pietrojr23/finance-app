@@ -2,18 +2,23 @@ import { formatCurrency } from "../utils/format";
 
 function SummaryCards({ totalIncome, totalExpenses, balance }) {
   return (
-    <div className="summary-cards">
-      <div className="card income">
-        <h3>Entradas</h3>
-        <p className="amount positive">{formatCurrency(totalIncome)}</p>
-      </div>
-      <div className="card balance">
-        <h3>Saldo</h3>
-        <p className="amount">{formatCurrency(balance)}</p>
-      </div>
-      <div className="card expense">
-        <h3>Saídas</h3>
-        <p className="amount negative">{formatCurrency(totalExpenses)}</p>
+    <div className="summary-hero">
+      <span className="hero-label">Saldo total</span>
+      <div className="hero-value">{formatCurrency(balance)}</div>
+
+      <div className="summary-row">
+        <div className="summary-mini">
+          <span className="mini-label">
+            <span className="mini-dot income">▲</span> Entradas
+          </span>
+          <div className="mini-balance">{formatCurrency(totalIncome)}</div>
+        </div>
+        <div className="summary-mini">
+          <span className="mini-label">
+            <span className="mini-dot expense">▼</span> Saídas
+          </span>
+          <div className="mini-balance">{formatCurrency(totalExpenses)}</div>
+        </div>
       </div>
     </div>
   );

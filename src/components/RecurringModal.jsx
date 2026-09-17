@@ -1,5 +1,6 @@
 import { useState } from "react";
 import CategorySelect from "./CategorySelect";
+import TypeSwitch from "./TypeSwitch";
 import { frequencies } from "../utils/constants";
 import { toISODate } from "../utils/format";
 
@@ -38,13 +39,7 @@ function RecurringModal({
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Tipo</label>
-            <select
-              value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value })}
-            >
-              <option value="income">Entrada (+)</option>
-              <option value="expense">Saída (-)</option>
-            </select>
+            <TypeSwitch value={form.type} onChange={(type) => setForm({ ...form, type })} />
           </div>
 
           <div className="form-group">

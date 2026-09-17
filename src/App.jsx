@@ -10,6 +10,8 @@ import TransactionsTab from "./components/TransactionsTab";
 import RecurringTab from "./components/RecurringTab";
 import TransactionModal from "./components/TransactionModal";
 import RecurringModal from "./components/RecurringModal";
+import BottomNav from "./components/BottomNav";
+import QuickAddSheet from "./components/QuickAddSheet";
 import "./App.css";
 
 function App() {
@@ -31,6 +33,7 @@ function App() {
   // Modals
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [showRecurringModal, setShowRecurringModal] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [editingRecurring, setEditingRecurring] = useState(null);
 
@@ -151,6 +154,7 @@ function App() {
 
   const handleNewTransaction = () => {
     setEditingTransaction(null);
+    setShowQuickAdd(false);
     setShowTransactionModal(true);
   };
 
@@ -218,6 +222,7 @@ function App() {
 
   const handleNewRecurring = () => {
     setEditingRecurring(null);
+    setShowQuickAdd(false);
     setShowRecurringModal(true);
   };
 
@@ -304,50 +309,50 @@ function App() {
     <div className="app">
       <Header user={user} onLogout={handleLogout} />
 
-      {/* Tab Navigation */}
-      <nav className="tab-nav">
-        <button
-          className={activeTab === "transactions" ? "active" : ""}
-          onClick={() => setActiveTab("transactions")}
-        >
-          📋 Transações
-        </button>
-        <button
-          className={activeTab === "recurring" ? "active" : ""}
-          onClick={() => setActiveTab("recurring")}
-        >
-          🔄 Recorrentes
-        </button>
-      </nav>
-
       <main className="main">
-        {activeTab === "transactions" && (
-          <>
-            <SummaryCards
-              totalIncome={totalIncome}
-              totalExpenses={totalExpenses}
-              balance={balance}
-            />
-            <TransactionsTab
-              transactions={transactions}
-              onNew={handleNewTransaction}
-              onEdit={handleEditTransaction}
-              onDelete={handleDeleteTransaction}
-            />
-          </>
-        )}
+        <div className="tabs-view">
+          {activeTab === "transactions" && (
+            <>
+              <SummaryCards
+                totalIncome={totalIncome}
+                totalExpenses={totalExpenses}
+                balance={balance}
+              />
+              <TransactionsTab
+                transactions={transactions}
+                onNew={handleNewTransaction}
+                onEdit={handleEditTransaction}
+                onDelete={handleDeleteTransaction}
+              />
+            </>
+          )}
 
-        {activeTab === "recurring" && (
-          <RecurringTab
-            recurringTransactions={recurringTransactions}
-            onNew={handleNewRecurring}
-            onEdit={handleEditRecurring}
-            onDelete={handleDeleteRecurring}
-            onToggle={handleToggleRecurring}
-            onGenerate={handleGenerateFromRecurring}
-          />
-        )}
+          {activeTab === "recurring" && (
+            <RecurringTab
+              recurringTransactions={recurringTransactions}
+              onNew={handleNewRecurring}
+              onEdit={handleEditRecurring}
+              onDelete={handleDeleteRecurring}
+              onToggle={handleToggleRecurring}
+              onGenerate={handleGenerateFromRecurring}
+            />
+          )}
+        </div>
       </main>
+
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onAdd={() => setShowQuickAdd(true)}
+      />
+
+      {showQuickAdd && (
+        <QuickAddSheet
+          onNewTransaction={handleNewTransaction}
+          onNewRecurring={handleNewRecurring}
+          onClose={() => setShowQuickAdd(false)}
+        />
+      )}
 
       {/* Transaction Modal */}
       {showTransactionModal && (

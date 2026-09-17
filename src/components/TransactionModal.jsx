@@ -1,5 +1,6 @@
 import { useState } from "react";
 import CategorySelect from "./CategorySelect";
+import TypeSwitch from "./TypeSwitch";
 import { toISODate } from "../utils/format";
 
 const buildInitialForm = (editing) => ({
@@ -35,13 +36,7 @@ function TransactionModal({
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Tipo</label>
-            <select
-              value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value })}
-            >
-              <option value="income">Entrada (+)</option>
-              <option value="expense">Saída (-)</option>
-            </select>
+            <TypeSwitch value={form.type} onChange={(type) => setForm({ ...form, type })} />
           </div>
 
           <div className="form-group">

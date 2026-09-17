@@ -4,14 +4,11 @@ import { getFrequencyLabel } from "../utils/constants";
 function RecurringTab({ recurringTransactions, onNew, onEdit, onDelete, onToggle, onGenerate }) {
   return (
     <>
-      <div className="actions">
-        <button className="btn-primary" onClick={onNew}>
-          + Novo Pagamento Recorrente
-        </button>
-      </div>
-
       <div className="transactions-section">
-        <h2>Pagamentos Recorrentes</h2>
+        <div className="section-head">
+          <h2>Pagamentos Recorrentes</h2>
+          <span className="section-count">{recurringTransactions.length}</span>
+        </div>
         {recurringTransactions.length === 0 ? (
           <div className="empty-state">
             <p>Nenhum pagamento recorrente cadastrado.</p>
@@ -31,7 +28,11 @@ function RecurringTab({ recurringTransactions, onNew, onEdit, onDelete, onToggle
                     <strong>{recurring.description}</strong>
                     <span className="transaction-meta">
                       {recurring.category} • {getFrequencyLabel(recurring.frequency)}
-                      {recurring.isActive ? " • Ativo" : " • Pausado"}
+                    </span>
+                    <span className="transaction-meta">
+                      <span className={`status-pill ${recurring.isActive ? "active" : "paused"}`}>
+                        {recurring.isActive ? "● Ativo" : "◾ Pausado"}
+                      </span>
                     </span>
                     <span className="transaction-meta next-due">
                       Próximo: {formatDate(recurring.nextDueDate)}
