@@ -218,6 +218,23 @@ body {
   gap: 1rem;
 }
 
+.tabs-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.summary-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.summary-column .month-nav {
+  margin-bottom: 0;
+}
+
 /* ============================================================
    Summary hero (Apple Wallet-style)
    ============================================================ */
@@ -1310,7 +1327,7 @@ body {
     align-items: start;
   }
 
-  .tabs-view-dashboard > .summary-hero {
+  .tabs-view-dashboard > .summary-column {
     position: sticky;
     top: calc(76px + 1rem);
   }

@@ -414,12 +414,14 @@ function App() {
         <div className={`tabs-view${activeTab === "transactions" ? " tabs-view-dashboard" : ""}`}>
           {activeTab === "transactions" && (
             <>
-              <MonthNavigator date={viewMonth} onChange={setViewMonth} />
-              <SummaryCards
-                totalIncome={monthStats.income}
-                totalExpenses={monthStats.expenses}
-                balance={monthStats.balance}
-              />
+              <div className="summary-column">
+                <MonthNavigator date={viewMonth} onChange={setViewMonth} />
+                <SummaryCards
+                  totalIncome={monthStats.income}
+                  totalExpenses={monthStats.expenses}
+                  balance={monthStats.balance}
+                />
+              </div>
               <TransactionsTab
                 transactions={monthTransactions}
                 categories={categories}
