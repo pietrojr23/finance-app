@@ -139,7 +139,26 @@ function App() {
     if (!user) return;
     if (window.confirm("Tem certeza que deseja excluir esta transação?")) {
       try {
+        const transaction = transactions.find((t) => t.id === id);
+
         await transactionService.delete(user.uid, id);
+
+        if (transaction?.recurringId) {
+          const recurringTpl = recurringTransactions.find(
+            (r) => r.id === transaction.recurringId
+          );
+          if (
+            recurringTpl &&
+            recurringTpl.nextDueDate.getTime() > transaction.date.getTime()
+          ) {
+            await recurringTransactionService.updateNextDueDate(
+              user.uid,
+              recurringTpl.id,
+              transaction.date
+            );
+          }
+        }
+
         loadData(user.uid);
       } catch (error) {
         console.error("Error deleting transaction:", error);
@@ -235,7 +254,8 @@ function App() {
         description: recurring.description,
         amount: recurring.amount,
         category: recurring.category,
-        date: new Date(recurring.nextDueDate)
+        date: new Date(recurring.nextDueDate),
+        recurringId: recurring.id
       };
       if (recurring.category === "Aluguel") {
         transaction.iptu = recurring.iptu || 0;
