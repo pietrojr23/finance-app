@@ -6,6 +6,7 @@ import {
   doc,
   query,
   orderBy,
+  onSnapshot,
   Timestamp,
   updateDoc
 } from "firebase/firestore";
@@ -26,6 +27,28 @@ export const recurringTransactionService = {
       isActive: recurringTransaction.isActive ?? true
     });
     return docRef.id;
+  },
+
+  // Subscribe to live recurring changes (real-time sync across devices)
+  subscribe(userId, onData, onError) {
+    const q = query(
+      getUserCollection(userId, "recurringTransactions"),
+      orderBy("nextDueDate", "asc")
+    );
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        onData(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            startDate: doc.data().startDate.toDate(),
+            nextDueDate: doc.data().nextDueDate.toDate()
+          }))
+        );
+      },
+      onError
+    );
   },
 
   // Get all recurring transactions ordered by next due date

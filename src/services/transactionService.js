@@ -6,6 +6,7 @@ import {
   doc,
   query,
   orderBy,
+  onSnapshot,
   Timestamp,
   updateDoc
 } from "firebase/firestore";
@@ -24,6 +25,27 @@ export const transactionService = {
       createdAt: Timestamp.now()
     });
     return docRef.id;
+  },
+
+  // Subscribe to live transaction changes (real-time sync across devices)
+  subscribe(userId, onData, onError) {
+    const q = query(
+      getUserCollection(userId, "transactions"),
+      orderBy("date", "desc")
+    );
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        onData(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            date: doc.data().date.toDate()
+          }))
+        );
+      },
+      onError
+    );
   },
 
   // Get all transactions ordered by date (newest first)

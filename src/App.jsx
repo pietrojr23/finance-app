@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { transactionService } from "./services/transactionService";
 import { recurringTransactionService } from "./services/recurringTransactionService";
 import { categoryService, DEFAULT_CATEGORIES } from "./services/categoryService";
@@ -77,35 +77,12 @@ function App() {
     return { income, expenses, balance: netIncome - expenses };
   }, [monthTransactions]);
 
-  const loadData = useCallback(async (userId) => {
-    setLoading(true);
-    try {
-      const [allTransactions, allRecurring, cats] = await Promise.all([
-        transactionService.getAll(userId),
-        recurringTransactionService.getAll(userId),
-        categoryService.seedDefaults(userId)
-      ]);
-      setTransactions(allTransactions);
-      setRecurringTransactions(allRecurring);
-      setCategories(cats);
-      setError(null);
-    } catch (err) {
-      console.error("Error loading data:", err);
-      setError("Erro ao carregar dados. Verifique a conexão.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   // Initialize auth listener
   useEffect(() => {
-    const unsubscribe = authService.onAuthStateChange(async (currentUser) => {
+    const unsubscribe = authService.onAuthStateChange((currentUser) => {
       setUser(currentUser);
       setAuthLoading(false);
-      if (currentUser) {
-        await loadData(currentUser.uid);
-      } else {
-        // Clear data when logged out
+      if (!currentUser) {
         setTransactions([]);
         setRecurringTransactions([]);
         setCategories([]);
@@ -113,7 +90,51 @@ function App() {
       }
     });
     return unsubscribe;
-  }, [loadData]);
+  }, []);
+
+  // Live data subscriptions (real-time sync across devices)
+  useEffect(() => {
+    if (!user) return;
+
+    let active = true;
+    const unsubscribers = [];
+    const handleError = (err) => {
+      console.error("Realtime listener error:", err);
+      setError("Erro ao carregar dados. Verifique a conexão.");
+      setLoading(false);
+    };
+
+    (async () => {
+      try {
+        await categoryService.seedDefaults(user.uid);
+      } catch (err) {
+        console.error("Error seeding categories:", err);
+      }
+      if (!active) return;
+      unsubscribers.push(
+        transactionService.subscribe(
+          user.uid,
+          (txs) => {
+            setTransactions(txs);
+            setError(null);
+            setLoading(false);
+          },
+          handleError
+        )
+      );
+      unsubscribers.push(
+        recurringTransactionService.subscribe(user.uid, setRecurringTransactions, handleError)
+      );
+      unsubscribers.push(
+        categoryService.subscribe(user.uid, setCategories, handleError)
+      );
+    })();
+
+    return () => {
+      active = false;
+      unsubscribers.forEach((unsub) => unsub && unsub());
+    };
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -180,7 +201,6 @@ function App() {
 
       setShowTransactionModal(false);
       setEditingTransaction(null);
-      loadData(user.uid);
     } catch (error) {
       console.error("Error saving transaction:", error);
     }
@@ -209,8 +229,6 @@ function App() {
             );
           }
         }
-
-        loadData(user.uid);
       } catch (error) {
         console.error("Error deleting transaction:", error);
       }
@@ -239,7 +257,6 @@ function App() {
         delete copy.condominio;
       }
       await transactionService.add(user.uid, copy);
-      loadData(user.uid);
     } catch (error) {
       console.error("Error duplicating transaction:", error);
     }
@@ -289,7 +306,6 @@ function App() {
 
       setShowRecurringModal(false);
       setEditingRecurring(null);
-      loadData(user.uid);
     } catch (error) {
       console.error("Error saving recurring transaction:", error);
     }
@@ -300,7 +316,6 @@ function App() {
     if (window.confirm("Tem certeza que deseja excluir este pagamento recorrente?")) {
       try {
         await recurringTransactionService.delete(user.uid, id);
-        loadData(user.uid);
       } catch (error) {
         console.error("Error deleting recurring transaction:", error);
       }
@@ -311,7 +326,6 @@ function App() {
     if (!user) return;
     try {
       await recurringTransactionService.toggleActive(user.uid, recurring.id, !recurring.isActive);
-      loadData(user.uid);
     } catch (error) {
       console.error("Error toggling recurring transaction:", error);
     }
@@ -348,8 +362,6 @@ function App() {
 
       const nextDueDate = recurringTransactionService.calculateNextDueDate(recurring.nextDueDate, recurring.frequency);
       await recurringTransactionService.updateNextDueDate(user.uid, recurring.id, nextDueDate);
-
-      loadData(user.uid);
     } catch (error) {
       console.error("Error generating transaction from recurring:", error);
     }
@@ -357,13 +369,11 @@ function App() {
 
   // Category handlers
   const handleAddCategory = async (type, name) => {
-    const updated = await categoryService.add(user.uid, type, name);
-    setCategories(updated);
+    await categoryService.add(user.uid, type, name);
   };
 
   const handleDeleteCategory = async (id) => {
     await categoryService.delete(user.uid, id);
-    setCategories(await categoryService.getAll(user.uid));
   };
 
   if (authLoading) {

@@ -5,7 +5,8 @@ import {
   deleteDoc,
   doc,
   query,
-  orderBy
+  orderBy,
+  onSnapshot
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 
@@ -31,6 +32,27 @@ export const categoryService = {
       type: doc.data().type,
       name: doc.data().name
     }));
+  },
+
+  // Subscribe to live category changes (real-time sync across devices)
+  subscribe(userId, onData, onError) {
+    const q = query(
+      getUserCollection(userId, "categories"),
+      orderBy("name", "asc")
+    );
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        onData(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            type: doc.data().type,
+            name: doc.data().name
+          }))
+        );
+      },
+      onError
+    );
   },
 
   // Seed default categories on first use, returns the full list
